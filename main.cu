@@ -726,26 +726,25 @@ __global__ void print_the_state(int *d_squad, int *d_temp, int n, int y){
         d_squad[id] = d_temp[id];
 
         if (d_squad[id] == 0)
-            printf("\033[%d;%dH%s\u2612",  y + 1, id - 1, KNRM);
+            printf("\033[%d;%dH%s0",  y + 1, id - 1, KWHT);
         else if (d_squad[id] == 1)
-            printf("\033[%d;%dH%s\u2612",  y + 1, id - 1, KGRN);
+            printf("\033[%d;%dH%s1",  y + 1, id - 1, KGRN);
         else if (d_squad[id] == 2)
-            printf("\033[%d;%dH%s\u2612",  y + 1, id - 1, KRED);
+            printf("\033[%d;%dH%s2",  y + 1, id - 1, KRED);
         else if (d_squad[id] == 3)
-            printf("\033[%d;%dH%s\u2612",  y + 1, id - 1, KYEL);
+            printf("\033[%d;%dH%s3",  y + 1, id - 1, KYEL);
         else if (d_squad[id] == 4)
-            printf("\033[%d;%dH%s\u2612",  y + 1, id - 1, KMAG);
+            printf("\033[%d;%dH%s4",  y + 1, id - 1, KMAG);
         else if (d_squad[id] == 5)
-            printf("\033[%d;%dH%s\u2612",  y + 1, id - 1, KBLU);
+            printf("\033[%d;%dH%s5",  y + 1, id - 1, KBLU);
         else if (d_squad[id] == 6)
-            printf("\033[%d;%dH%s\u2612",  y + 1, id - 1, KCYN);
+            printf("\033[%d;%dH%s6",  y + 1, id - 1, KCYN);
         else if (d_squad[id] == 7)
-            printf("\033[%d;%dH%s\u2612",  y + 1, id - 1, KWHT);
+            printf("\033[%d;%dH%s7",  y + 1, id - 1, KNRM);
         else
             printf("");
 
     }
-    __syncthreads();
 }
 
 int main() {
@@ -771,8 +770,8 @@ int main() {
     }
 
 
-    FSSP_init<<<1,n+4>>>(d_squad, n);
-
+    FSSP_init<<<((n+4)/128 + 1), 128>>>(d_squad, n);
+    
     if(cudaMalloc(&d_temp,sizeof(int)*(n+4))!= cudaSuccess){
         dbug("Allocation Error | var: % | size: %. \n", "d_temp", n+4);
     }
@@ -782,19 +781,18 @@ int main() {
 
     for(int i=2; i<n+2; i++){
         if(i == 2){
-            printf("%s\033[%d;%dH\u2612",KGRN, 1, i-1 );
+            printf("%s\033[%d;%dH1",KGRN, 1, i-1 );
         }
         else{
-            printf("%s\033[%d;%dH\u2612",KWHT, 1, i-1 );
+            printf("%s\033[%d;%dH0",KWHT, 1, i-1 );
         }
     }
     cout<<endl;
 
     for(int i=1; i<n; i++) {
-        get_next_state<<<1, n + 4>>>(d_squad, d_temp, d_trans, n);
-        cudaDeviceSynchronize();
+        get_next_state<<<((n+4)/128 + 1), 128>>>(d_squad, d_temp, d_trans, n);
 
-        print_the_state<<<1, n + 4>>>(d_squad, d_temp, n, i);
+        print_the_state<<<((n+4)/128 + 1), 128>>>(d_squad, d_temp, n, i);
         cudaDeviceSynchronize();
 
         printf("\n");
